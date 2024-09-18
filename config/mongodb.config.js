@@ -1,15 +1,16 @@
 const mongoose = require('mongoose')
 
-const connectDB = async() => {
+const connectDB = async () => {
     try {
-        await mongoose.connect('mongodb://localhost:27017/Ai-Model')
-        console.log('database connection successful')
+        await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/Ai-Model', {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
+        console.log('Database connection successful');
     } catch (error) {
-        console.log(error)
-        setTimeout(() =>{
-            connectDB()
-        },2000)
+        console.error('Database connection failed:', error.message);
+        setTimeout(connectDB, 2000);
     }
-}
+};
 
-module.exports = connectDB
+module.exports = connectDB;

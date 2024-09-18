@@ -1,34 +1,30 @@
 const { response } = require("../service/Response");
 const jwt = require('jsonwebtoken');
-const User = require('../model/user.model')
+const User = require('../model/user.model');
 
+module.exports = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return response(res, 'Token not found, please log in again!', {}, 401);
+    }
 
-module.exports = verifyToken = async (req, res, next) => {
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      return response(res, 'Token not found, please log in again!', {}, 401);
+    }
 
-  console.log(req.headers)
+    const decoded = jwt.verify(token, process.env.ACCESS_SECRET);
+    const user = await User.findOne({ userId: decoded.userId });
 
-  const authHeader = req.headers['authorization'];
+    if (!user) {
+      return response(res, 'User session expired, please log in again!', {}, 401);
+    }
 
-  if (!authHeader) {
-    return response(res, 'token not found, please login again!', {}, 401)
+    req.user = user;
+    next();
+  } catch (error) {
+    return response(res, 'Authentication failed', { error: error.message }, 403);
   }
-
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return response(res, 'token not found, please login again!', {}, 401)
-  }
-
-  const userId = await jwt.decode(token, process.env.ACCESS_SECRET)
-
-  const user = await User.findOne({userId : userId.userId})
-
-  if (!user || user === undefined) {
-    return response(res,'user session expired!, please login again!',{},401)
-  }
-
-  req.user = user
-
-  next();
 };
 
